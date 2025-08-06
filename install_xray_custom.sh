@@ -94,15 +94,11 @@ detect_architecture() {
 
 # 获取最新版本
 get_latest_version() {
-    print_info "正在获取最新版本信息..."
     local version=$(curl -s "$GITHUB_API/latest" | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$' | head -1)
     if [ -z "$version" ]; then
-        print_error "无法获取最新版本信息"
-        print_info "尝试使用备用方法..."
         # 备用方法：从页面解析
         version=$(curl -s "https://github.com/XTLS/Xray-core/releases/latest" | grep -o 'tag/v[0-9.]*' | head -1 | cut -d'/' -f2)
         if [ -z "$version" ]; then
-            print_error "备用方法也失败了"
             return 1
         fi
     fi
@@ -115,17 +111,6 @@ list_versions() {
     curl -s "$GITHUB_API" | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$' | head -10
 }
 
-# 验证下载URL
-verify_download_url() {
-    local url="$1"
-    print_info "验证下载链接..."
-    if curl -s --head "$url" | head -1 | grep -q "200 OK"; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 # 下载并安装 Xray
 install_xray() {
     local version="$1"
@@ -136,17 +121,20 @@ install_xray() {
     fi
     
     if [ -z "$version" ]; then
+        print_info "正在获取最新版本信息..."
         version=$(get_latest_version)
         if [ $? -ne 0 ]; then
+            print_error "无法获取最新版本信息"
             return 1
         fi
     fi
     
     print_info "准备安装 Xray $version ($arch)"
     
-    # 验证版本格式
-    if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    # 验证版本格式 - 支持更灵活的版本格式
+    if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
         print_error "无效的版本格式: $version"
+        print_info "期望格式: v1.8.4 或 v25.8.3"
         return 1
     fi
     
@@ -160,12 +148,14 @@ install_xray() {
     print_info "下载地址: $download_url"
     
     # 验证URL有效性
-    if ! verify_download_url "$download_url"; then
+    print_info "验证下载链接..."
+    if ! curl -s --head "$download_url" | head -1 | grep -q "200 OK"; then
         print_error "下载链接无效或文件不存在"
         print_info "可能的原因："
-        print_info "1. 版本号错误"
-        print_info "2. 架构不支持"
+        print_info "1. 版本号错误: $version"
+        print_info "2. 架构不支持: $arch"
         print_info "3. 网络连接问题"
+        print_info "请访问 https://github.com/XTLS/Xray-core/releases 确认可用版本"
         return 1
     fi
     
