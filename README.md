@@ -9,10 +9,12 @@
 
 ## 快速使用
 
+**O11 安装**
 ```bash
-# O11 安装
 bash <(curl -L https://raw.githubusercontent.com/G1deonChan/self-scripted/main/install_o11.sh)
+```
 
-# SSH 密钥管理
+**SSH 密钥管理**
+```bash
 bash <(curl -L https://raw.githubusercontent.com/G1deonChan/self-scripted/main/ssh_key_manager.sh)
 ```
