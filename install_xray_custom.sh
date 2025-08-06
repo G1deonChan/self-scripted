@@ -133,9 +133,8 @@ install_xray() {
     
     # 验证版本格式 - 支持更灵活的版本格式
     if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-        print_error "无效的版本格式: $version"
-        print_info "期望格式: v1.8.4 或 v25.8.3"
-        return 1
+        print_warning "版本格式可能不标准: $version"
+        print_info "继续尝试安装..."
     fi
     
     # 创建目录
@@ -147,23 +146,34 @@ install_xray() {
     
     print_info "下载地址: $download_url"
     
-    # 验证URL有效性
+    # 验证URL有效性 - 使用更宽松的验证
     print_info "验证下载链接..."
-    if ! curl -s --head "$download_url" | head -1 | grep -q "200 OK"; then
-        print_error "下载链接无效或文件不存在"
-        print_info "可能的原因："
+    local head_response=$(curl -s -I -L "$download_url" 2>/dev/null | head -1)
+    if [[ ! "$head_response" =~ (200|302|301) ]]; then
+        print_warning "无法验证下载链接，但将尝试直接下载"
+        print_info "如果下载失败，可能的原因："
         print_info "1. 版本号错误: $version"
         print_info "2. 架构不支持: $arch"
         print_info "3. 网络连接问题"
         print_info "请访问 https://github.com/XTLS/Xray-core/releases 确认可用版本"
-        return 1
+    else
+        print_success "下载链接验证通过"
     fi
     
     print_info "正在下载 Xray..."
-    if ! curl -L --progress-bar "$download_url" -o "$temp_file"; then
-        print_error "下载失败"
-        print_error "请检查网络连接或手动下载文件"
-        return 1
+    # 首先尝试使用进度条下载
+    if ! curl -L --progress-bar --fail "$download_url" -o "$temp_file" 2>/dev/null; then
+        print_warning "带进度条下载失败，尝试静默下载..."
+        # 如果失败，尝试静默下载
+        if ! curl -L -s --fail "$download_url" -o "$temp_file"; then
+            print_error "下载失败"
+            print_info "请尝试以下解决方案："
+            print_info "1. 检查网络连接"
+            print_info "2. 使用代理或VPN"
+            print_info "3. 手动下载文件: $download_url"
+            print_info "4. 选择其他版本"
+            return 1
+        fi
     fi
     
     # 验证下载的文件
