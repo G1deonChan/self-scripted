@@ -95,10 +95,16 @@ detect_architecture() {
 # 获取最新版本
 get_latest_version() {
     print_info "正在获取最新版本信息..."
-    local version=$(curl -s "$GITHUB_API/latest" | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$')
+    local version=$(curl -s "$GITHUB_API/latest" | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$' | head -1)
     if [ -z "$version" ]; then
         print_error "无法获取最新版本信息"
-        return 1
+        print_info "尝试使用备用方法..."
+        # 备用方法：从页面解析
+        version=$(curl -s "https://github.com/XTLS/Xray-core/releases/latest" | grep -o 'tag/v[0-9.]*' | head -1 | cut -d'/' -f2)
+        if [ -z "$version" ]; then
+            print_error "备用方法也失败了"
+            return 1
+        fi
     fi
     echo "$version"
 }
@@ -107,6 +113,17 @@ get_latest_version() {
 list_versions() {
     print_info "正在获取版本列表..."
     curl -s "$GITHUB_API" | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$' | head -10
+}
+
+# 验证下载URL
+verify_download_url() {
+    local url="$1"
+    print_info "验证下载链接..."
+    if curl -s --head "$url" | head -1 | grep -q "200 OK"; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # 下载并安装 Xray
@@ -127,6 +144,12 @@ install_xray() {
     
     print_info "准备安装 Xray $version ($arch)"
     
+    # 验证版本格式
+    if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        print_error "无效的版本格式: $version"
+        return 1
+    fi
+    
     # 创建目录
     sudo mkdir -p "$XRAY_DIR"
     
@@ -134,9 +157,29 @@ install_xray() {
     local download_url="https://github.com/XTLS/Xray-core/releases/download/$version/Xray-$arch.zip"
     local temp_file="/tmp/xray.zip"
     
+    print_info "下载地址: $download_url"
+    
+    # 验证URL有效性
+    if ! verify_download_url "$download_url"; then
+        print_error "下载链接无效或文件不存在"
+        print_info "可能的原因："
+        print_info "1. 版本号错误"
+        print_info "2. 架构不支持"
+        print_info "3. 网络连接问题"
+        return 1
+    fi
+    
     print_info "正在下载 Xray..."
-    if ! curl -L "$download_url" -o "$temp_file"; then
+    if ! curl -L --progress-bar "$download_url" -o "$temp_file"; then
         print_error "下载失败"
+        print_error "请检查网络连接或手动下载文件"
+        return 1
+    fi
+    
+    # 验证下载的文件
+    if [ ! -f "$temp_file" ] || [ ! -s "$temp_file" ]; then
+        print_error "下载的文件无效或为空"
+        rm -f "$temp_file"
         return 1
     fi
     
@@ -147,11 +190,26 @@ install_xray() {
         return 1
     fi
     
+    # 验证解压的文件
+    if [ ! -f "$XRAY_DIR/xray" ]; then
+        print_error "解压后未找到 xray 可执行文件"
+        rm -f "$temp_file"
+        return 1
+    fi
+    
     # 设置权限
     sudo chmod +x "$XRAY_DIR/xray"
     rm -f "$temp_file"
     
-    print_success "Xray $version 安装完成"
+    # 验证安装
+    local installed_version=$("$XRAY_DIR/xray" version 2>/dev/null | head -1)
+    if [ -n "$installed_version" ]; then
+        print_success "Xray $version 安装完成"
+        print_info "安装版本: $installed_version"
+    else
+        print_warning "Xray 安装完成，但无法验证版本信息"
+    fi
+    
     return 0
 }
 
