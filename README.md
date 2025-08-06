@@ -6,6 +6,7 @@
 
 **install_o11.sh** - O11 DRMStuff 自动安装
 **ssh_key_manager.sh** - SSH 密钥管理工具
+**install_xray_custom.sh** - Xray 代理自动安装和管理工具
 
 ## 快速使用
 
@@ -17,4 +18,9 @@ bash <(curl -L https://raw.githubusercontent.com/G1deonChan/self-scripted/main/i
 **SSH 密钥管理**
 ```bash
 bash <(curl -L https://raw.githubusercontent.com/G1deonChan/self-scripted/main/ssh_key_manager.sh)
+```
+
+**Xray 代理管理**
+```bash
+bash <(curl -L https://raw.githubusercontent.com/G1deonChan/self-scripted/main/install_xray_custom.sh)
 ```
