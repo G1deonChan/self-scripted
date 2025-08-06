@@ -54,11 +54,13 @@ confirm() {
     local choice
     
     while true; do
-        echo -e "${YELLOW}$prompt [y/n]:${NC} "
-        read -r choice
-        case $choice in
-            [Yy]* ) return 0;;
-            [Nn]* ) return 1;;
+        echo -n -e "${YELLOW}$prompt [y/n]: ${NC}"
+        read choice
+        choice=$(echo "$choice" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        case "$choice" in
+            y|yes ) return 0;;
+            n|no ) return 1;;
+            "" ) print_warning "请输入 y 或 n";;
             * ) print_warning "请输入 y 或 n";;
         esac
     done
@@ -614,13 +616,14 @@ manage_configs() {
         echo "4) 返回主菜单"
         echo "========================================="
         
-        echo -e "${YELLOW}请选择操作 [1-4]:${NC} "
-        read -r choice
+        echo -n -e "${YELLOW}请选择操作 [1-4]: ${NC}"
+        read choice
+        choice=$(echo "$choice" | tr -d '[:space:]')
         
-        case $choice in
+        case "$choice" in
             1)
-                echo -e "${YELLOW}请输入配置链接 (vless://、vmess://、ss://):${NC} "
-                read -r config_url
+                echo -n -e "${YELLOW}请输入配置链接 (vless://、vmess://、ss://): ${NC}"
+                read config_url
                 if [ -n "$config_url" ]; then
                     create_config "$config_url"
                     if [ $? -eq 0 ]; then
@@ -653,10 +656,19 @@ manage_configs() {
             4)
                 break
                 ;;
+            "")
+                print_warning "请输入选项"
+                ;;
             *)
                 print_error "无效选择"
                 ;;
         esac
+        
+        if [ "$choice" != "4" ]; then
+            echo ""
+            echo -n -e "${YELLOW}按回车键继续...${NC}"
+            read
+        fi
     done
 }
 
@@ -691,18 +703,22 @@ main_menu() {
         echo "0) 退出"
         echo "========================================="
         
-        echo -e "${YELLOW}请选择操作 [0-9]:${NC} "
-        read -r choice
+        echo -n -e "${YELLOW}请选择操作 [0-9]: ${NC}"
+        read choice
         
-        case $choice in
+        # 清理输入，移除空白字符
+        choice=$(echo "$choice" | tr -d '[:space:]')
+        
+        case "$choice" in
             1)
                 echo ""
                 echo "1) 安装最新版本"
                 echo "2) 选择特定版本"
-                echo -e "${YELLOW}请选择 [1-2]:${NC} "
-                read -r install_choice
+                echo -n -e "${YELLOW}请选择 [1-2]: ${NC}"
+                read install_choice
+                install_choice=$(echo "$install_choice" | tr -d '[:space:]')
                 
-                case $install_choice in
+                case "$install_choice" in
                     1)
                         install_xray
                         if [ $? -eq 0 ]; then
@@ -714,8 +730,9 @@ main_menu() {
                         print_info "可用版本列表:"
                         list_versions
                         echo ""
-                        echo -e "${YELLOW}请输入版本号 (如 v1.8.4):${NC} "
-                        read -r version
+                        echo -n -e "${YELLOW}请输入版本号 (如 v1.8.4): ${NC}"
+                        read version
+                        version=$(echo "$version" | tr -d '[:space:]')
                         if [ -n "$version" ]; then
                             install_xray "$version"
                             if [ $? -eq 0 ]; then
@@ -723,11 +740,14 @@ main_menu() {
                             fi
                         fi
                         ;;
+                    *)
+                        print_error "无效选择"
+                        ;;
                 esac
                 ;;
             2)
-                echo -e "${YELLOW}请输入配置链接 (vless://、vmess://、ss://):${NC} "
-                read -r config_url
+                echo -n -e "${YELLOW}请输入配置链接 (vless://、vmess://、ss://): ${NC}"
+                read config_url
                 if [ -n "$config_url" ]; then
                     create_config "$config_url"
                     if [ $? -eq 0 ]; then
@@ -760,10 +780,18 @@ main_menu() {
                 print_success "感谢使用 Xray 管理工具！"
                 exit 0
                 ;;
+            "")
+                print_warning "请输入选项"
+                ;;
             *)
                 print_error "无效选择，请输入 0-9"
                 ;;
         esac
+        
+        # 添加暂停，让用户看到结果
+        echo ""
+        echo -n -e "${YELLOW}按回车键继续...${NC}"
+        read
     done
 }
 
