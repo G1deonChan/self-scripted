@@ -12,6 +12,13 @@ SERVICE_FILE="/etc/systemd/system/xray.service"
 LOG_FILE="$XRAY_DIR/xray.log"
 GITHUB_API="https://api.github.com/repos/XTLS/Xray-core/releases"
 
+# 系统检测变量
+OS=""
+VER=""
+PKG_MANAGER=""
+PKG_UPDATE=""
+PKG_INSTALL=""
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -760,21 +767,167 @@ main_menu() {
     done
 }
 
-# 检查依赖
-check_dependencies() {
-    local missing_deps=()
+# 检测系统类型
+detect_system() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS=$NAME
+        VER=$VERSION_ID
+    elif type lsb_release >/dev/null 2>&1; then
+        OS=$(lsb_release -si)
+        VER=$(lsb_release -sr)
+    elif [ -f /etc/lsb-release ]; then
+        . /etc/lsb-release
+        OS=$DISTRIB_ID
+        VER=$DISTRIB_RELEASE
+    elif [ -f /etc/debian_version ]; then
+        OS=Debian
+        VER=$(cat /etc/debian_version)
+    elif [ -f /etc/SuSe-release ]; then
+        OS=openSUSE
+    elif [ -f /etc/redhat-release ]; then
+        OS=RedHat
+    else
+        OS=$(uname -s)
+        VER=$(uname -r)
+    fi
     
+    case "${OS,,}" in
+        *ubuntu*|*debian*)
+            PKG_MANAGER="apt"
+            PKG_UPDATE="apt update"
+            PKG_INSTALL="apt install -y"
+            ;;
+        *centos*|*rhel*|*fedora*|*rocky*|*alma*)
+            if command -v dnf > /dev/null; then
+                PKG_MANAGER="dnf"
+                PKG_UPDATE="dnf check-update"
+                PKG_INSTALL="dnf install -y"
+            else
+                PKG_MANAGER="yum"
+                PKG_UPDATE="yum check-update"
+                PKG_INSTALL="yum install -y"
+            fi
+            ;;
+        *arch*)
+            PKG_MANAGER="pacman"
+            PKG_UPDATE="pacman -Sy"
+            PKG_INSTALL="pacman -S --noconfirm"
+            ;;
+        *opensuse*|*suse*)
+            PKG_MANAGER="zypper"
+            PKG_UPDATE="zypper refresh"
+            PKG_INSTALL="zypper install -y"
+            ;;
+        *alpine*)
+            PKG_MANAGER="apk"
+            PKG_UPDATE="apk update"
+            PKG_INSTALL="apk add"
+            ;;
+        *)
+            print_warning "未识别的系统: $OS"
+            PKG_MANAGER="unknown"
+            ;;
+    esac
+    
+    print_info "检测到系统: $OS $VER"
+    print_info "包管理器: $PKG_MANAGER"
+}
+
+# 自动安装依赖
+auto_install_dependencies() {
+    local missing_deps=()
+    local install_packages=()
+    
+    # 检查必需的命令
     for cmd in curl unzip systemctl; do
         if ! command -v "$cmd" > /dev/null; then
             missing_deps+=("$cmd")
         fi
     done
     
-    if [ ${#missing_deps[@]} -ne 0 ]; then
-        print_error "缺少以下依赖: ${missing_deps[*]}"
-        print_info "请先安装这些依赖，然后重新运行脚本"
-        exit 1
+    if [ ${#missing_deps[@]} -eq 0 ]; then
+        print_success "所有依赖已满足"
+        return 0
     fi
+    
+    print_info "缺少以下依赖: ${missing_deps[*]}"
+    
+    if [ "$PKG_MANAGER" = "unknown" ]; then
+        print_error "无法识别包管理器，请手动安装以下依赖:"
+        for dep in "${missing_deps[@]}"; do
+            echo "  - $dep"
+        done
+        return 1
+    fi
+    
+    # 根据包管理器映射包名
+    for dep in "${missing_deps[@]}"; do
+        case "$dep" in
+            curl)
+                install_packages+=("curl")
+                ;;
+            unzip)
+                install_packages+=("unzip")
+                ;;
+            systemctl)
+                case "$PKG_MANAGER" in
+                    apt)
+                        install_packages+=("systemd")
+                        ;;
+                    dnf|yum)
+                        install_packages+=("systemd")
+                        ;;
+                    pacman)
+                        install_packages+=("systemd")
+                        ;;
+                    zypper)
+                        install_packages+=("systemd")
+                        ;;
+                    apk)
+                        install_packages+=("openrc")
+                        ;;
+                esac
+                ;;
+        esac
+    done
+    
+    if confirm "是否自动安装缺少的依赖？"; then
+        print_info "更新包管理器..."
+        if ! sudo $PKG_UPDATE 2>/dev/null; then
+            print_warning "更新包管理器失败，继续安装..."
+        fi
+        
+        print_info "安装依赖: ${install_packages[*]}"
+        if sudo $PKG_INSTALL "${install_packages[@]}"; then
+            print_success "依赖安装完成"
+            
+            # 重新检查
+            local still_missing=()
+            for cmd in "${missing_deps[@]}"; do
+                if ! command -v "$cmd" > /dev/null; then
+                    still_missing+=("$cmd")
+                fi
+            done
+            
+            if [ ${#still_missing[@]} -gt 0 ]; then
+                print_error "以下依赖仍然缺失: ${still_missing[*]}"
+                print_info "请手动安装这些依赖后重新运行脚本"
+                return 1
+            fi
+        else
+            print_error "依赖安装失败"
+            return 1
+        fi
+    else
+        print_info "请手动安装以下依赖后重新运行脚本:"
+        for dep in "${missing_deps[@]}"; do
+            echo "  - $dep"
+        done
+        return 1
+    fi
+    
+    return 0
 }
 
 # 检查权限
@@ -791,8 +944,12 @@ main() {
     print_title "Xray 自动安装和管理脚本"
     echo ""
     
-    check_dependencies
+    detect_system
     check_permissions
+    
+    if ! auto_install_dependencies; then
+        exit 1
+    fi
     
     main_menu
 }
