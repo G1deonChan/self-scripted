@@ -228,8 +228,10 @@ add_ssh_key() {
 
 # 选择目标用户
 select_user() {
-    local current_user=$(whoami)
+    # 使用更兼容的方式获取当前用户
+    local current_user=${USER:-$(whoami 2>/dev/null || echo "unknown")}
     
+    echo ""
     print_info "选择目标用户："
     echo "1) 当前用户 ($current_user)"
     echo "2) root用户"
@@ -238,6 +240,7 @@ select_user() {
     
     printf "${YELLOW}请选择 [1-3]: ${NC}"
     read -r user_choice
+    echo "" # 添加换行
     
     case $user_choice in
         1)
@@ -295,7 +298,9 @@ main_menu() {
         case $choice in
             1)
                 print_info "开始添加SSH公钥..."
+                echo "调试: 准备调用 select_user 函数"
                 target_user=$(select_user)
+                echo "调试: select_user 返回值: $?, 用户: '$target_user'"
                 if [ $? -eq 0 ] && [ -n "$target_user" ]; then
                     # 询问是否清除原有公钥
                     if confirm "是否要先清除用户 $target_user 的原有公钥？"; then
@@ -331,7 +336,8 @@ main_menu() {
 
 # 检查是否以root权限运行（可选）
 check_permissions() {
-    local current_user=$(whoami)
+    local current_user=${USER:-$(whoami 2>/dev/null || echo "unknown")}
+    echo ""
     if [ "$current_user" != "root" ]; then
         print_warning "当前以用户 $current_user 身份运行"
         print_warning "某些操作可能需要sudo权限"
@@ -339,6 +345,7 @@ check_permissions() {
             exit 1
         fi
     fi
+    echo ""
 }
 
 # 主程序入口
