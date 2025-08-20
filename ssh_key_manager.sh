@@ -29,7 +29,8 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-    confirm() {
+# 确认函数
+confirm() {
     local prompt="$1"
     local choice
     
@@ -229,53 +230,66 @@ add_ssh_key() {
 # 选择目标用户
 select_user() {
     # 使用更兼容的方式获取当前用户
-    local current_user=${USER:-$(whoami 2>/dev/null || echo "unknown")}
+    local current_user=${USER:-$(whoami 2>/dev/null || echo "root")}
     
-    echo ""
-    print_info "选择目标用户："
-    echo "1) 当前用户 ($current_user)"
-    echo "2) root用户"
-    echo "3) 其他用户"
-    echo ""
-    
-    printf "${YELLOW}请选择 [1-3]: ${NC}"
-    read -r user_choice
-    echo "" # 添加换行
-    
-    case $user_choice in
-        1)
-            echo "$current_user"
-            ;;
-        2)
-            if [ "$current_user" != "root" ]; then
-                print_warning "操作root用户需要sudo权限"
-                if ! confirm "继续操作吗？"; then
-                    return 1
+    while true; do
+        echo ""
+        print_info "选择目标用户："
+        echo "1) 当前用户 ($current_user)"
+        echo "2) root用户"
+        echo "3) 其他用户"
+        echo ""
+        
+        printf "${YELLOW}请选择 [1-3]: ${NC}"
+        read -r user_choice
+        echo ""
+        
+        case $user_choice in
+            1)
+                echo "$current_user"
+                return 0
+                ;;
+            2)
+                if [ "$current_user" != "root" ]; then
+                    print_warning "操作root用户需要sudo权限"
+                    printf "${YELLOW}继续操作吗？ [y/n]: ${NC}"
+                    read -r continue_choice
+                    if [[ "$continue_choice" =~ ^[Yy] ]]; then
+                        echo "root"
+                        return 0
+                    else
+                        continue
+                    fi
                 fi
-            fi
-            echo "root"
-            ;;
-        3)
-            printf "${YELLOW}请输入用户名: ${NC}"
-            read -r target_user
-            
-            # 验证用户是否存在
-            if ! id "$target_user" &>/dev/null; then
-                print_error "用户 $target_user 不存在"
-                return 1
-            fi
-            
-            if confirm "确认操作用户 $target_user 吗？"; then
-                echo "$target_user"
-            else
-                return 1
-            fi
-            ;;
-        *)
-            print_error "无效选择"
-            return 1
-            ;;
-    esac
+                echo "root"
+                return 0
+                ;;
+            3)
+                printf "${YELLOW}请输入用户名: ${NC}"
+                read -r target_user
+                echo ""
+                
+                # 验证用户是否存在
+                if ! id "$target_user" &>/dev/null; then
+                    print_error "用户 $target_user 不存在"
+                    continue
+                fi
+                
+                printf "${YELLOW}确认操作用户 $target_user 吗？ [y/n]: ${NC}"
+                read -r confirm_choice
+                if [[ "$confirm_choice" =~ ^[Yy] ]]; then
+                    echo "$target_user"
+                    return 0
+                else
+                    continue
+                fi
+                ;;
+            *)
+                print_error "无效选择，请输入 1-3"
+                continue
+                ;;
+        esac
+    done
 }
 
 # 主菜单
@@ -298,15 +312,15 @@ main_menu() {
         case $choice in
             1)
                 print_info "开始添加SSH公钥..."
-                echo "调试: 准备调用 select_user 函数"
                 target_user=$(select_user)
-                echo "调试: select_user 返回值: $?, 用户: '$target_user'"
                 if [ $? -eq 0 ] && [ -n "$target_user" ]; then
                     # 询问是否清除原有公钥
                     if confirm "是否要先清除用户 $target_user 的原有公钥？"; then
                         clear_keys "$target_user"
                     fi
                     add_ssh_key "$target_user"
+                else
+                    print_error "用户选择失败或取消操作"
                 fi
                 ;;
             2)
@@ -314,6 +328,8 @@ main_menu() {
                 target_user=$(select_user)
                 if [ $? -eq 0 ] && [ -n "$target_user" ]; then
                     show_current_keys "$target_user"
+                else
+                    print_error "用户选择失败或取消操作"
                 fi
                 ;;
             3)
@@ -321,6 +337,8 @@ main_menu() {
                 target_user=$(select_user)
                 if [ $? -eq 0 ] && [ -n "$target_user" ]; then
                     clear_keys "$target_user"
+                else
+                    print_error "用户选择失败或取消操作"
                 fi
                 ;;
             4)
