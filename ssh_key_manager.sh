@@ -29,13 +29,12 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# 确认函数
-confirm() {
+    confirm() {
     local prompt="$1"
     local choice
     
     while true; do
-        echo -e "${YELLOW}$prompt [y/n]:${NC} "
+        printf "${YELLOW}$prompt [y/n]: ${NC}"
         read -r choice
         case $choice in
             [Yy]* ) return 0;;
@@ -86,7 +85,7 @@ remove_specific_key() {
     
     show_current_keys "$target_user"
     
-    echo -e "${YELLOW}请输入要删除的公钥行号:${NC} "
+    printf "${YELLOW}请输入要删除的公钥行号: ${NC}"
     read -r line_number
     
     # 验证输入是否为数字
@@ -144,8 +143,9 @@ clear_keys() {
     echo "1) 清除全部公钥"
     echo "2) 清除指定公钥"
     echo "3) 取消"
+    echo ""
     
-    echo -e "${YELLOW}请选择 [1-3]:${NC} "
+    printf "${YELLOW}请选择 [1-3]: ${NC}"
     read -r clear_choice
     
     case $clear_choice in
@@ -192,7 +192,7 @@ add_ssh_key() {
     fi
     
     print_info "请粘贴SSH公钥（完成后按回车）："
-    echo -e "${YELLOW}公钥内容:${NC}"
+    printf "${YELLOW}公钥内容: ${NC}"
     read -r public_key
     
     # 验证公钥格式
@@ -234,8 +234,9 @@ select_user() {
     echo "1) 当前用户 ($current_user)"
     echo "2) root用户"
     echo "3) 其他用户"
+    echo ""
     
-    echo -e "${YELLOW}请选择 [1-3]:${NC} "
+    printf "${YELLOW}请选择 [1-3]: ${NC}"
     read -r user_choice
     
     case $user_choice in
@@ -252,7 +253,7 @@ select_user() {
             echo "root"
             ;;
         3)
-            echo -e "${YELLOW}请输入用户名:${NC} "
+            printf "${YELLOW}请输入用户名: ${NC}"
             read -r target_user
             
             # 验证用户是否存在
@@ -286,8 +287,9 @@ main_menu() {
         echo "3) 清除公钥"
         echo "4) 退出"
         echo "========================================="
+        echo ""
         
-        echo -e "${YELLOW}请选择操作 [1-4]:${NC} "
+        printf "${YELLOW}请选择操作 [1-4]: ${NC}"
         read -r choice
         
         case $choice in
