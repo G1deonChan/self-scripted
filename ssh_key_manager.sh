@@ -238,7 +238,9 @@ main_menu() {
         case $choice in
             1)
                 print_info "开始添加SSH公钥..."
+                echo "正在选择目标用户..."
                 target_user=$(select_user)
+                echo "选择的用户: $target_user"
                 if [ $? -eq 0 ] && [ -n "$target_user" ]; then
                     add_ssh_key "$target_user"
                 else
