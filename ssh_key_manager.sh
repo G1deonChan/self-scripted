@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# SSH密钥管理脚本
+# SSH密钥管理脚本 v2.0
 # 功能：为Linux服务器添加/管理SSH公钥
 # 作者：GitHub Copilot
-# 日期：2025年8月5日
+# 日期：2025年8月20日
 
 # 颜色定义
 RED='\033[0;31m'
@@ -32,8 +32,6 @@ print_error() {
 # 确认函数
 confirm() {
     local prompt="$1"
-    local choice
-    
     while true; do
         printf "${YELLOW}$prompt [y/n]: ${NC}"
         read -r choice
@@ -43,6 +41,11 @@ confirm() {
             * ) print_warning "请输入 y 或 n";;
         esac
     done
+}
+
+# 获取当前用户
+get_current_user() {
+    echo "${USER:-$(whoami 2>/dev/null || echo "root")}"
 }
 
 # 显示当前用户的SSH密钥
@@ -68,109 +71,65 @@ show_current_keys() {
     fi
 }
 
-# 清除指定公钥
-remove_specific_key() {
-    local target_user="$1"
-    local ssh_dir="/home/$target_user/.ssh"
+# 选择目标用户
+select_user() {
+    local current_user
+    current_user=$(get_current_user)
     
-    if [ "$target_user" = "root" ]; then
-        ssh_dir="/root/.ssh"
-    fi
-    
-    local auth_keys="$ssh_dir/authorized_keys"
-    
-    if [ ! -f "$auth_keys" ]; then
-        print_error "公钥文件不存在"
-        return 1
-    fi
-    
-    show_current_keys "$target_user"
-    
-    printf "${YELLOW}请输入要删除的公钥行号: ${NC}"
-    read -r line_number
-    
-    # 验证输入是否为数字
-    if ! [[ "$line_number" =~ ^[0-9]+$ ]]; then
-        print_error "无效的行号"
-        return 1
-    fi
-    
-    # 获取总行数
-    local total_lines=$(wc -l < "$auth_keys")
-    
-    if [ "$line_number" -lt 1 ] || [ "$line_number" -gt "$total_lines" ]; then
-        print_error "行号超出范围（1-$total_lines）"
-        return 1
-    fi
-    
-    # 显示要删除的公钥内容
-    local key_to_delete=$(sed -n "${line_number}p" "$auth_keys")
-    print_warning "将要删除的公钥："
-    echo "$key_to_delete"
-    
-    if confirm "确认删除这个公钥吗？"; then
-        # 创建备份
-        cp "$auth_keys" "${auth_keys}.backup.$(date +%Y%m%d_%H%M%S)"
-        
-        # 删除指定行
-        sed -i "${line_number}d" "$auth_keys"
-        print_success "公钥已删除"
-        
-        # 显示更新后的公钥列表
+    while true; do
         echo ""
-        show_current_keys "$target_user"
-    else
-        print_info "取消删除操作"
-    fi
-}
-
-# 清除公钥
-clear_keys() {
-    local target_user="$1"
-    local ssh_dir="/home/$target_user/.ssh"
-    
-    if [ "$target_user" = "root" ]; then
-        ssh_dir="/root/.ssh"
-    fi
-    
-    local auth_keys="$ssh_dir/authorized_keys"
-    
-    if [ ! -f "$auth_keys" ]; then
-        print_warning "用户 $target_user 没有现有的公钥文件"
-        return 0
-    fi
-    
-    print_info "选择清除方式："
-    echo "1) 清除全部公钥"
-    echo "2) 清除指定公钥"
-    echo "3) 取消"
-    echo ""
-    
-    printf "${YELLOW}请选择 [1-3]: ${NC}"
-    read -r clear_choice
-    
-    case $clear_choice in
-        1)
-            show_current_keys "$target_user"
-            if confirm "确认清除用户 $target_user 的所有公钥吗？"; then
-                # 创建备份
-                cp "$auth_keys" "${auth_keys}.backup.$(date +%Y%m%d_%H%M%S)"
-                > "$auth_keys"
-                print_success "所有公钥已清除"
-            else
-                print_info "取消清除操作"
-            fi
-            ;;
-        2)
-            remove_specific_key "$target_user"
-            ;;
-        3)
-            print_info "取消清除操作"
-            ;;
-        *)
-            print_error "无效选择"
-            ;;
-    esac
+        print_info "选择目标用户："
+        echo "1) 当前用户 ($current_user)"
+        echo "2) root用户"
+        echo "3) 其他用户"
+        echo ""
+        
+        printf "${YELLOW}请选择 [1-3]: ${NC}"
+        read -r user_choice
+        echo ""
+        
+        case $user_choice in
+            1)
+                echo "$current_user"
+                return 0
+                ;;
+            2)
+                if [ "$current_user" != "root" ]; then
+                    print_warning "操作root用户需要sudo权限"
+                    if confirm "继续操作吗？"; then
+                        echo "root"
+                        return 0
+                    else
+                        continue
+                    fi
+                fi
+                echo "root"
+                return 0
+                ;;
+            3)
+                printf "${YELLOW}请输入用户名: ${NC}"
+                read -r target_user
+                echo ""
+                
+                # 验证用户是否存在
+                if ! id "$target_user" &>/dev/null; then
+                    print_error "用户 $target_user 不存在"
+                    continue
+                fi
+                
+                if confirm "确认操作用户 $target_user 吗？"; then
+                    echo "$target_user"
+                    return 0
+                else
+                    continue
+                fi
+                ;;
+            *)
+                print_error "无效选择，请输入 1-3"
+                continue
+                ;;
+        esac
+    done
 }
 
 # 添加SSH公钥
@@ -195,6 +154,7 @@ add_ssh_key() {
     print_info "请粘贴SSH公钥（完成后按回车）："
     printf "${YELLOW}公钥内容: ${NC}"
     read -r public_key
+    echo ""
     
     # 验证公钥格式
     if [[ ! "$public_key" =~ ^(ssh-rsa|ssh-dss|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) ]]; then
@@ -204,6 +164,7 @@ add_ssh_key() {
     
     print_info "您输入的公钥："
     echo "$public_key"
+    echo ""
     
     if confirm "确认添加这个公钥到用户 $target_user 吗？"; then
         # 检查公钥是否已存在
@@ -227,69 +188,33 @@ add_ssh_key() {
     fi
 }
 
-# 选择目标用户
-select_user() {
-    # 使用更兼容的方式获取当前用户
-    local current_user=${USER:-$(whoami 2>/dev/null || echo "root")}
+# 清除公钥
+clear_keys() {
+    local target_user="$1"
+    local ssh_dir="/home/$target_user/.ssh"
     
-    while true; do
-        echo ""
-        print_info "选择目标用户："
-        echo "1) 当前用户 ($current_user)"
-        echo "2) root用户"
-        echo "3) 其他用户"
-        echo ""
-        
-        printf "${YELLOW}请选择 [1-3]: ${NC}"
-        read -r user_choice
-        echo ""
-        
-        case $user_choice in
-            1)
-                echo "$current_user"
-                return 0
-                ;;
-            2)
-                if [ "$current_user" != "root" ]; then
-                    print_warning "操作root用户需要sudo权限"
-                    printf "${YELLOW}继续操作吗？ [y/n]: ${NC}"
-                    read -r continue_choice
-                    if [[ "$continue_choice" =~ ^[Yy] ]]; then
-                        echo "root"
-                        return 0
-                    else
-                        continue
-                    fi
-                fi
-                echo "root"
-                return 0
-                ;;
-            3)
-                printf "${YELLOW}请输入用户名: ${NC}"
-                read -r target_user
-                echo ""
-                
-                # 验证用户是否存在
-                if ! id "$target_user" &>/dev/null; then
-                    print_error "用户 $target_user 不存在"
-                    continue
-                fi
-                
-                printf "${YELLOW}确认操作用户 $target_user 吗？ [y/n]: ${NC}"
-                read -r confirm_choice
-                if [[ "$confirm_choice" =~ ^[Yy] ]]; then
-                    echo "$target_user"
-                    return 0
-                else
-                    continue
-                fi
-                ;;
-            *)
-                print_error "无效选择，请输入 1-3"
-                continue
-                ;;
-        esac
-    done
+    if [ "$target_user" = "root" ]; then
+        ssh_dir="/root/.ssh"
+    fi
+    
+    local auth_keys="$ssh_dir/authorized_keys"
+    
+    if [ ! -f "$auth_keys" ]; then
+        print_warning "用户 $target_user 没有现有的公钥文件"
+        return 0
+    fi
+    
+    show_current_keys "$target_user"
+    echo ""
+    
+    if confirm "确认清除用户 $target_user 的所有公钥吗？"; then
+        # 创建备份
+        cp "$auth_keys" "${auth_keys}.backup.$(date +%Y%m%d_%H%M%S)"
+        > "$auth_keys"
+        print_success "所有公钥已清除，备份已保存"
+    else
+        print_info "取消清除操作"
+    fi
 }
 
 # 主菜单
@@ -297,7 +222,7 @@ main_menu() {
     while true; do
         echo ""
         echo "========================================="
-        echo "          SSH密钥管理工具"
+        echo "          SSH密钥管理工具 v2.0"
         echo "========================================="
         echo "1) 添加SSH公钥"
         echo "2) 查看现有公钥"
@@ -308,16 +233,13 @@ main_menu() {
         
         printf "${YELLOW}请选择操作 [1-4]: ${NC}"
         read -r choice
+        echo ""
         
         case $choice in
             1)
                 print_info "开始添加SSH公钥..."
                 target_user=$(select_user)
                 if [ $? -eq 0 ] && [ -n "$target_user" ]; then
-                    # 询问是否清除原有公钥
-                    if confirm "是否要先清除用户 $target_user 的原有公钥？"; then
-                        clear_keys "$target_user"
-                    fi
                     add_ssh_key "$target_user"
                 else
                     print_error "用户选择失败或取消操作"
@@ -352,9 +274,10 @@ main_menu() {
     done
 }
 
-# 检查是否以root权限运行（可选）
+# 检查权限
 check_permissions() {
-    local current_user=${USER:-$(whoami 2>/dev/null || echo "unknown")}
+    local current_user
+    current_user=$(get_current_user)
     echo ""
     if [ "$current_user" != "root" ]; then
         print_warning "当前以用户 $current_user 身份运行"
@@ -370,7 +293,7 @@ check_permissions() {
 main() {
     clear
     print_info "欢迎使用SSH密钥管理工具"
-    print_info "脚本版本：1.0"
+    print_info "脚本版本：2.0"
     print_info "运行日期：$(date '+%Y-%m-%d %H:%M:%S')"
     
     check_permissions
