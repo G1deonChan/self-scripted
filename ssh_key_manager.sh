@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # SSH密钥管理脚本
 # 功能：为Linux服务器添加/管理SSH公钥
