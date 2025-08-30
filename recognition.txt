@@ -1,0 +1,28 @@
+My.Dress-Up.Darling.S02(E\d+)(?=.*ADWeb) => My.Dress-Up.Darling.{[tmdbid=123249;type=tv;s=1]}.S01\1 && S01E <> 2025 >> EP+12
+Minami-ke Okaeri => Minami-ke Okaeri {[tmdbid=56354;type=tv;s=3]}
+青春豬頭少年不會夢到聖誕服女郎 => {[tmdbid=82739;type=tv;s=2]}
+Ma10p_1080p => 1080p
+Code Geass Lelouch of the Rebellion => Code Geass: Lelouch of the Rebellion
+Code Geass: Lelouch of the Rebellion R2 => Code Geass Lelouch of the Rebellion S02
+Seraph of the End：Vampire Reign => Seraph of the End S01
+Seraph of the End：Battle in Nagoya => Seraph of the End S02
+Shakugan no Shana III -Final- => Shakugan no Shana S03
+Shakugan no Shana II => Shakugan no Shana S02
+PSYCHO-PASS II => PSYCHO-PASS II{[tmdbid=43865;type=tv;s=2]}
+Kumo desu ga, Nani ka? => Kumo desu ga, Nani ka?{[tmdbid=99618;type=tv]}
+Tada-kun wa Koi o Shinai => Tada-Kun Wa Koi O Shinai{[tmdbid=75975;type=tv]}
+Uchiage Hanabi, Shita kara Miru ka Yoko kara Miru ka => Uchiage Hanabi, Shita kara Miru ka Yoko kara Miru ka{[tmdbid=431819;type=movie]}
+Sword Art Online II => Sword Art Online II{[tmdbid=45782;type=tv;s=2]}
+Sword Art Online Alicization(?!.*War of Underworld) => Sword Art Online Alicization{[tmdbid=45782;type=tv;s=3]}
+Sword Art Online Alicization War of Underworld => Sword Art Online Alicization War of Underworld{[tmdbid=45782;type=tv;s=4]}
+Sword Art Online -Ordinal Scale- => Sword Art Online -Ordinal Scale-{[tmdbid=413594;type=movie]}
+Karakai Jouzu no Takagi-san => Karakai Jouzu no Takagi-san{[tmdbid=75865;type=tv]}
+Sono Bisque Doll wa Koi wo Suru => Sono Bisque Doll wa Koi wo Suru{[tmdbid=123249;type=tv]}
+Rewrite => Rewrite{[tmdbid=66101;type=tv;s=1]}  # 第一季
+Rewrite - (14|1[5-9]|2[0-9]) => Rewrite{[tmdbid=66101;type=tv;s=2;e=\1-13]} && Rewrite <> [14-29] >> EP-13
+Tenki No Ko => Tenki No Ko{[tmdbid=568160;type=movie]}
+Kimi no Na wa. -your name.- => Kimi no Na wa. -your name.-{[tmdbid=372058;type=movie]}
+Suzume no Tojimari => Suzume no Tojimari{[tmdbid=916224;type=movie]}
+劇場版 進撃の巨人 Season2 覚醒の咆哮 => 劇場版 進撃の巨人 Season2 覚醒の咆哮{[tmdbid=492999;type=movie]}
+劇場版 進撃の巨人 Season1 #2 後編 自由の翼 => 劇場版 進撃の巨人 Season1 #2 後編 自由の翼{[tmdbid=330081;type=movie]}
+進撃の巨人 Season1 #1 前編 紅蓮の弓矢 => 進撃の巨人 Season1 #1 前編 紅蓮の弓矢{[tmdbid=379088;type=movie]}
