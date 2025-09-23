@@ -1,3 +1,13 @@
+轉生為第七王子，隨心所欲的魔法學習之路 第二季 - (\d+) => 轉生為第七王子，隨心所欲的魔法學習之路.{[tmdbid=213830;type=tv;s=1]}.S01E\1
+黑執事 綠之魔女篇 - (\d+) => 黑執事.{[tmdbid=50712;type=tv;s=5]}.S05E\1
+男女之間存在純友情嗎？（不，不存在！） - (\d+) => 男女之間存在純友情嗎？（不，不存在！）.{[tmdbid=217407;type=tv]}.S01E\1
+隨興旅－That′s Journey－ - (\d+) => 隨興旅－That′s Journey－.{[tmdbid=254853;type=tv]}.S01E\1
+去唱卡拉 OK 吧！ - (\d+) => 去唱卡拉 OK 吧！.{[tmdbid=274546;type=tv]}.S01E\1
+天久鷹央的推理病歷表 - (\d+) => 天久鷹央的推理病歷表.{[tmdbid=250994;type=tv]}.S01E\1
+地縛少年花子君 2 - (\d+) => 地縛少年花子君.{[tmdbid=95269;type=tv;s=2]}.S02E\1
+被驅逐出勇者隊伍的白魔導師，被 S 級冒險者撿到 - (\d+) => 被驅逐出勇者隊伍的白魔導師，被S級冒險者撿到.{[tmdbid=284771;type=tv]}.S01E\1
+戀上換裝娃娃 Season 2 - (\d+) => 戀上換裝娃娃.{[tmdbid=123249;type=tv;s=1]}.S01E\1
+The.Apothecary.Diaries.S02(E\d+)(?=.*ADWeb) => The.Apothecary.Diaries.{[tmdbid=219881;type=tv;s=1]}.S01\1 && S01E <> 2025 >> EP+24
 My.Dress-Up.Darling.S02(E\d+)(?=.*ADWeb) => My.Dress-Up.Darling.{[tmdbid=123249;type=tv;s=1]}.S01\1 && S01E <> 2025 >> EP+12
 Minami-ke Okaeri => Minami-ke Okaeri {[tmdbid=56354;type=tv;s=3]}
 青春豬頭少年不會夢到聖誕服女郎 => {[tmdbid=82739;type=tv;s=2]}
