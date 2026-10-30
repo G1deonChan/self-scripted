@@ -100,3 +100,50 @@ Suzume no Tojimari => Suzume no Tojimari{[tmdbid=916224;type=movie]}
 #地獄模式（TMDB 280049）：ANi 第二季沿用全系列绝对集号（13-25），TMDB 第2季只有 13 集，需归一到 S02E01-E13（第1季 01-12 不变）
 地獄模式.*?(?:2nd Season|S02) - <> \[1080P\] >> EP-12
 地狱模式.*?(?:2nd Season|S02) - <> \[1080P\] >> EP-12
+
+#========以下识别词由本地实例同步（2026-10-30）========#
+#ANi 重生者的魔法一定要特別 第二季（ANi 使用全系列绝对集号 13-24，归一到 TMDB 230050 S02E01-E12）
+(?<=ANi.*?) 重生者的魔法一定要特別 第二季 - (1[3-9]|2[0-4]) => 重生者的魔法一定要特别.{[tmdbid=230050;type=tv;s=2]}.S02E\1 && S02E <> 1080P >> EP-12
+#ANi 侦探已死第二季：仅修正 ANi/Baha 1080P 命名，绑定 TMDB 117061 S02，保留原集号
+\[ANi\]\s*偵探已經，死了。Season 2\s*-\s*(\d{2})(?=\s*\[1080P\]\[Baha\]) => [ANi] 侦探已死.{[tmdbid=117061;type=tv;s=2;e=\1]}.S02E\1
+#ANi 相反的你和我（TMDB 278043 為單季 25 集絕對集號：巴哈「第二季」13-25 歸入 S01，勿依「第二季」歸入 S02）
+(?<=ANi.*?)相反的你和我 第二季 - (\d+) => 正相反的你与我.{[tmdbid=278043;type=tv;s=1]}.S01E\1
+#VCB 季号修正 2026-10-27：进击的巨人 26-37=S02/38-59=S03/60-87=S04；南家Okawari=S02/Tadaima=S04；摇曳百合2=S02/3=S03；我们无法一起学习!=S02；圣诞之吻SS+=S02；Free!EternalSummer=S02；全金属狂潮Fumoffu=S02/TSR=S03/IV=S04；灰色乐园=S02；超电磁炮S=S02/T=S03；Hello!!黄金拼图=S02；街角魔族2丁目=S02；命运石之门0=78102；Rewrite14-24=S02
+Shingeki no Kyojin \[(2[6-9]|3[0-7])\](\[Ma10p_1080p\]) => 进击的巨人{[tmdbid=1429;type=tv;s=2]}.S02E\1 \2 && S02E <> \[Ma10p_1080p\] >> EP-25
+Shingeki no Kyojin \[(3[89]|4[0-9]|5[0-9])\](\[Ma10p_1080p\]) => 进击的巨人{[tmdbid=1429;type=tv;s=3]}.S03E\1 \2 && S03E <> \[Ma10p_1080p\] >> EP-37
+Shingeki no Kyojin \[(6[0-9]|7[0-9]|8[0-7])\](\[Ma10p_1080p\]) => 进击的巨人{[tmdbid=1429;type=tv;s=4]}.S04E\1 \2 && S04E <> \[Ma10p_1080p\] >> EP-59
+Minami-ke Okawari => Minami-ke Okawari{[tmdbid=56354;type=tv;s=2]}
+Minami-ke Tadaima => Minami-ke Tadaima{[tmdbid=56354;type=tv;s=4]}
+Yuru Yuri 2 => 摇曳百合 第二季{[tmdbid=52891;type=tv;s=2]}
+Yuru Yuri 3 => 摇曳百合 第三季{[tmdbid=52891;type=tv;s=3]}
+Bokutachi wa Benkyou ga Dekinai! => Bokutachi wa Benkyou ga Dekinai!{[tmdbid=87432;type=tv;s=2]}
+Amagami SS\+ Plus => Amagami SS+ Plus{[tmdbid=52083;type=tv;s=2]}
+Free! -Eternal Summer- => Free! -Eternal Summer-{[tmdbid=61456;type=tv;s=2]}
+Full Metal Panic[?？] Fumoffu => Full Metal Panic? Fumoffu{[tmdbid=39379;type=tv;s=2]}
+Full Metal Panic! The Second Raid => Full Metal Panic! The Second Raid{[tmdbid=39379;type=tv;s=3]}
+Full Metal Panic! Invisible Victory => Full Metal Panic! Invisible Victory{[tmdbid=39379;type=tv;s=4]}
+Grisaia no Rakuen => Grisaia no Rakuen{[tmdbid=61422;type=tv;s=2]}
+Toaru Kagaku no Railgun S => Toaru Kagaku no Railgun S{[tmdbid=30977;type=tv;s=2]}
+Toaru Kagaku no Railgun T => Toaru Kagaku no Railgun T{[tmdbid=30977;type=tv;s=3]}
+Hello!! Kiniro Mosaic => Hello!! Kiniro Mosaic{[tmdbid=78589;type=tv;s=2]}
+Machikado Mazoku 2-Choume => Machikado Mazoku 2-Choume{[tmdbid=88806;type=tv;s=2]}
+Steins;Gate 0 => 命运石之门 零{[tmdbid=78102;type=tv;s=1]}
+Rewrite \[(1[4-9]|2[0-4])\](\[Ma10p_1080p\]) => 罚抄{[tmdbid=66101;type=tv;s=2]}.S02E\1 \2 && S02E <> \[Ma10p_1080p\] >> EP-13
+#VCB 剧场版 擅长捉弄的高木同学（2022，TMDB 938567）：替换别名并绑定电影身份，必须置于通用 TV 规则之前，且替换后不再包含 Karakai Jouzu no Takagi-san 以免再被并入 TV 75865
+Gekijouban Karakai Jouzu no Takagi-san => 擅长捉弄的高木同学 剧场版{[tmdbid=938567;type=movie]}
+#VCB 关于我转生变成史莱姆这档事 2nd Season：BD 特典 [24.9] 归入 TMDB S00E07「日向·坂口」
+\[VCB-Studio\] Tensei Shitara Slime Datta Ken 2nd Season \[24\.9\] => 關於我轉生變成史萊姆這檔事 特別篇 {[tmdbid=82684;type=tv;s=0;e=7]}
+#VCB 关于我转生变成史莱姆这档事 2nd Season：Part1 总集篇 [36.5] 归入 TMDB S00E08「维鲁多拉日记2」
+\[VCB-Studio\] Tensei Shitara Slime Datta Ken 2nd Season \[36\.5\] => 關於我轉生變成史萊姆這檔事 特別篇 {[tmdbid=82684;type=tv;s=0;e=8]}
+#VCB 关于我转生变成史莱姆这档事 2nd Season：全系列绝对集号 25-48 归一到 TMDB S02E01-E24
+Tensei Shitara Slime Datta Ken 2nd Season \[ <> \]\[Ma10p_1080p\] >> EP-24
+#VCB 关于我转生变成史莱姆这档事 2nd Season：偏移后 1-9 集输出标准 S02E0x，避免规划器无法解析单数字集号
+Tensei Shitara Slime Datta Ken 2nd Season \[([1-9])\] => Tensei Shitara Slime Datta Ken S02E0\1
+#VCB 关于我转生变成史莱姆这档事 3rd Season：特别篇 [48.5] 归入 TMDB S00E14「迪亚波罗日记」
+\[VCB-Studio\] Tensei Shitara Slime Datta Ken 3rd Season \[48\.5\] => 關於我轉生變成史萊姆這檔事 特別篇 {[tmdbid=82684;type=tv;s=0;e=14]}
+#VCB 关于我转生变成史莱姆这档事 3rd Season：特别篇 [65.5] 归入 TMDB S00E15「鲁米纳斯回忆录」
+\[VCB-Studio\] Tensei Shitara Slime Datta Ken 3rd Season \[65\.5\] => 關於我轉生變成史萊姆這檔事 特別篇 {[tmdbid=82684;type=tv;s=0;e=15]}
+#VCB 关于我转生变成史莱姆这档事 3rd Season：全系列绝对集号 49-72 归一到 TMDB S03E01-E24
+Tensei Shitara Slime Datta Ken 3rd Season \[ <> \]\[Ma10p_1080p\] >> EP-48
+#VCB 关于我转生变成史莱姆这档事 3rd Season：偏移后 1-9 集输出标准 S03E0x，避免规划器无法解析单数字集号
+Tensei Shitara Slime Datta Ken 3rd Season \[([1-9])\] => Tensei Shitara Slime Datta Ken S03E0\1
